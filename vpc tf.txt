@@ -1,0 +1,222 @@
+host ec2 instance
+install tf from site - https://developer.hashicorp.com/terraform/install
+create user
+aws configure
+---------------------
+##create vpc
+
+resource "aws_vpc" "vpc" {
+  cidr_block       = "10.0.0.0/16"
+  instance_tenancy = "default"
+
+  tags = {
+    Name = "vpc"
+  }
+}
+
+##create public subnet
+
+resource "aws_subnet" "public-subnet" {
+  vpc_id     = aws_vpc.vpc.id
+  cidr_block = "10.0.0.0/24"
+
+  tags = {
+    Name = "public-subnet"
+  }
+}
+
+##create private subnet
+
+resource "aws_subnet" "private-subnet" {
+  vpc_id     = aws_vpc.vpc.id
+  cidr_block = "10.0.1.0/24"
+
+  tags = {
+    Name = "private-subnet"
+  }
+}
+
+##creating security group
+
+resource "aws_security_group" "sg" {
+  name        = "sg"
+  vpc_id      = aws_vpc.vpc.id
+  description = "allow ssh and http"
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+
+}
+
+##create igw
+
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.vpc.id
+
+  tags = {
+    Name = "igw"
+  }
+}
+
+##create route table
+
+resource "aws_route_table" "public-rt" {
+  vpc_id = aws_vpc.vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+
+  tags = {
+    Name = "public-rt"}
+  }
+    resource "aws_route_table_association" "public-asso" {
+      subnet_id      = aws_subnet.public-subnet.id
+      route_table_id = aws_route_table.public-rt.id
+    }
+
+
+
+##creating vpc
+
+resource "aws_instance" "custom-vpc" {
+  ami             = "ami-00ca32bbc84273381"
+  subnet_id       = aws_subnet.public-subnet.id
+  instance_type   = "t2.micro"
+  security_groups = ["${aws_security_group.sg.id}"]
+  key_name        = "instance"
+  tags = {
+    Name     = "test-World"
+    Stage    = "testing"
+    Location = "chennai"
+  }
+
+}
+
+##creating EIP
+
+resource "aws_eip" "ishan-eip" {
+  instance = aws_instance.custom-vpc.id
+}
+
+##creating database ec2
+
+resource "aws_instance" "database-server" {
+  ami             = "ami-00ca32bbc84273381"
+  subnet_id       = aws_subnet.private-subnet.id
+  instance_type   = "t2.micro"
+  security_groups = ["${aws_security_group.sg.id}"]
+  key_name        = "instance"
+  tags = {
+    Name     = "db-World"
+    Stage    = "stage-base"
+    Location = "delhi"
+  }
+
+}
+
+##create a public ip for Nat gateway
+
+resource "aws_eip" "nat-eip" {
+}
+
+### create Nat gateway
+
+resource "aws_nat_gateway" "ngw" {
+  allocation_id = aws_eip.nat-eip.id
+  subnet_id     = aws_subnet.public-subnet.id
+}
+
+#create private route table
+
+resource "aws_route_table" "private-rt" {
+  vpc_id = aws_vpc.vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_nat_gateway.ngw.id
+  }
+
+
+  tags = {
+    Name = "private-rt"
+  }
+}
+
+##route Tatable assosication code
+
+resource "aws_route_table_association" "private-asso" {
+  subnet_id      = aws_subnet.private-subnet.id
+  route_table_id = aws_route_table.private-rt.id
+}
+
+
+#create user
+
+resource "aws_iam_user" "example" {
+  name  = "deng.${count.index}"
+  count = 2
+}
+
+# now multiple user using list
+
+variable "user_names" {
+  description = "create iam users"
+  type        = list(any)
+  default     = ["kapil", "deng", "yuva"]
+}
+
+resource "aws_iam_user" "testing" {
+  count = length(var.user_names)
+  name  = element(var.user_names, count.index)
+
+}
+
+output "all_arn" {
+  value = ["${aws_iam_user.testing.*.arn}"]
+}
+
+data "aws_iam_policy_document" "ec2_read_only" {
+  statement {
+    effect    = "Allow"
+    actions   = ["ec2:Describe*"]
+    resources = ["*"]
+  }
+}
+
+#now create the policy from that document
+
+resource "aws_iam_policy" "ec2_read_only" {
+  name   = "ec2-read-only"
+  policy = data.aws_iam_policy_document.ec2_read_only.json
+}
+
+#now attach iam policy to users
+
+resource "aws_iam_user_policy_attachment" "ec2_access" {
+  count      = length(var.user_names)
+  user       = element(aws_iam_user.testing.*.name, count.index)
+  policy_arn = aws_iam_policy.ec2_read_only.arn
+}
+
