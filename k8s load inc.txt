@@ -1,0 +1,57 @@
+https://github.com/sanjayguruji/Sanjaya-K8S-Code/blob/main/Eks-cluster-creating
+pods ->
+
+mkdir /k8s-code
+
+cd /k8s-code
+--------------------------------
+regapp-deploy
+-------------------------------
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: regapp-deployment
+  labels: 
+     app: regapp
+
+spec:
+  replicas: 2 
+  selector:
+    matchLabels:
+      app: regapp
+
+  template:
+    metadata:
+      labels:
+        app: regapp
+    spec:
+      containers:
+      - name: regapp
+        image: ashfaque9x/regapp
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+----------------------------------------
+regapp-service
+----------------------------------------
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: regapp-service
+  labels:
+    app: regapp 
+spec:
+  selector:
+    app: regapp 
+
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+  type: LoadBalancer
