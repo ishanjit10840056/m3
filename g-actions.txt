@@ -1,0 +1,24 @@
+create a s3
+enable acl
+enable static website
+index document - index.html
+in bucket policy paste the link
+
+then create a s3 user
+give him amazons3fullaccess
+
+in secret and variables
+actions
+
+create a GitHub repo
+create a index.html file in it
+now create actions secret
+aws_bucket_name
+in secret give the bucket name
+save
+now create another action secret
+and give the IAM access key
+and in another secret give the password
+
+simple workflow
+configure
