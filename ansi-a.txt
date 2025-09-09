@@ -1,0 +1,273 @@
+Create 2 inst main node and worker node -> connect and set passwd -> set hostname -> ip a s in both term ->
+
+ANSIBLE SETUP
+
+  passwd root  // do in both terminal
+  ip a s
+  vim /etc/hosts  // paste the private ip and host name and do same thing in worker node also
+  vim /etc/ssh/sshd_config   // permitrootlogin,passwdbasedauth
+  systemctl restart sshd
+  systemctl enable sshd
+  ssh-keyegen                          // do in both machine
+  ssh-copy-id root@<Term private ip>   // do in both machine
+
+  term(mn):
+
+    yum update -y
+    yum install ansible-core* -y  |  pip3 install ansible
+    ansible --version
+    scp /etc/hosts root@<master private ip>:/etc/hosts
+    scp /etc/hosts root@<worker private ip>:/etc/hosts
+    cd /etc/ansible   --> if not mkdir ansible inside etc
+    vim ansible.cfg   --> paste sir ansible repo
+    vim hosts 
+    // write inside vim hosts 
+    [dev-server]
+    worker
+             
+    cd
+    ansible all -m ping
+
+========== for multiple users =============
+mkdir /project
+cd /project/
+vim my-playbook.yaml  --> paste sir ansible - chapter5 - users-loop.yml - https://github.com/sanjayguruji/ansible-code/blob/main/Chapter%205%20-%20Loops%20in%20Ansible/users-loop.yml
+ansible-playbook my-playbook.yaml --syntax-check
+ansible-playbook my-playbook.yaml -C
+ansible-playbook my-playbook.yaml
+ 
+Term(wn):- cat /etc/passwd  // to check users
+
+============= for install httpd and copy fstab file in /tmp folder =======================
+mkdir /project
+cd /project/
+vim my-playbook.yaml
+//Write inside my-playbook.yaml
+---
+- name: Install httpd and copy fstab to /tmp
+  hosts: all
+  become: true
+  tasks:
+ 
+    - name: Install httpd package
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+ 
+    - name: Ensure httpd service is started and enabled
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+ 
+    - name: Copy /etc/fstab to /tmp
+      ansible.builtin.copy:
+        src: /etc/fstab
+        dest: /tmp/fstab
+        remote_src: true
+ 
+term(mn):-
+ansible-playbook my-playbook.yaml --syntax-check
+ansible-playbook my-playbook.yaml -C
+ansible-playbook my-playbook.yaml
+term(wn):- rpmquery httpd
+cd /tmp
+ls
+curl http://localhost
+
+<------------------ Ansible ------------>
+
+
+Create 2 inst main node and worker node -> connect and set passwd -> set hostname -> ip a s in both term ->
+ 
+  Term(mn): passwd root  // do in both terminal
+
+
+            ip a s
+
+
+            vim /etc/hosts  // paste its private ip and host name and do samething in worker node also
+
+
+vim /etc/ssh/sshd_config   // permitrootlogin,passwdbasedauth
+
+
+systemctl restart sshd
+
+
+systemctl enable sshd
+
+
+ssh-keyegen                          // do in both machine
+
+
+ssh-copy-id root@<Term private ip>   // do in both machine
+
+
+term(mn):
+
+
+yum update -y
+
+
+yum install ansible-core* -y  |  pip3 install ansible
+
+
+ansible --version
+
+
+scp /etc/hosts root@<master private ip>:/etc/hosts
+
+
+scp /etc/hosts root@<worker private ip>:/etc/hosts
+
+
+cd /etc/ansible   --> if not mkdir ansible inside etc
+
+
+vim ansible.cfg   --> paste sir ansible repo
+
+
+vim hosts 
+
+
+// write inside vim hosts 
+
+
+[dev-server]
+
+
+master-node.example.com
+ 
+[prod-server]
+
+
+node-one.example.com        
+
+
+cd
+
+
+ansible all -m ping
+ 
+========== for multiple users =============
+
+
+mkdir /project
+
+
+cd /project/
+
+
+vim my-playbook.yaml  --> paste sir ansible - chapter5 - users-loop.yml
+
+
+ansible-playbook my-playbook.yaml --syntax-check
+
+
+ansible-playbook my-playbook.yaml -C
+
+
+ansible-playbook my-playbook.yaml
+ 
+Term(wn):- cat /etc/passwd  // to check users
+ 
+============= for install httpd and copy fstab file in /tmp folder =======================
+
+
+mkdir /project
+cd /project/
+vim my-playbook.yaml
+
+//Write this inside my-playbook.yaml
+
+---
+- name: Install httpd and copy fstab to /tmp
+  hosts: all
+  become: true
+  tasks:
+    - name: Install httpd package
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+    - name: Ensure httpd service is started and enabled
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+    - name: Copy /etc/fstab to /tmp
+      ansible.builtin.copy:
+        src: /etc/fstab
+        dest: /tmp/fstab
+        remote_src: true
+ 
+term(mn):-
+ansible-playbook my-playbook.yaml --syntax-check
+ansible-playbook my-playbook.yaml -C
+ansible-playbook my-playbook.yaml
+term(wn):- rpmquery httpd
+cd /tmp
+ls
+curl http://localhost
+ 
+ 
+============== Create ec2 using ansible =============
+
+
+Term(mn): // same as above and install these 
+
+-> create user -> attach policy ec2fullaccess, administrator access, generate Access key and Secret key
+
+Term(mn): // same as above and install these     
+
+     sudo yum install python3-pip -y
+     pip3 install boto3
+     pip3 install botocore 
+     aws configure
+     ansible-galaxy collection install amazon.aws
+     mkdir /inst
+     cd /inst/
+     vim creds.yaml
+       aws_access_key: //paste AK
+       aws_secret_key: //paste SK
+     vim ec2.yaml
+
+
+// pate this inside ec2.yaml
+
+
+---
+- name: creating ec2 instance
+  hosts: all
+  vars_files:
+      - creds.yaml
+  tasks:
+        - name: creating Ec2 instance via Ansible
+          amazon.aws.ec2_instance:
+            aws_access_key: "{{ aws_access_key }}"
+            aws_secret_key: "{{ aws_secret_key }}"
+            name: web-serv
+            instance_type: t2.medium
+            image_id: ami-00ca32bbc84273381
+            vpc_subnet_id: subnet-07557da9ba3082bb1
+            security_group: sg-0e7b493bf8f5f8907
+            key_name: aura
+            region: us-east-1
+            count: 1
+            state: present
+
+
+term(mn):- vim inventory.ini
+
+   //paste this inside inventory file
+
+[localhost]
+127.0.0.1 ansible_connection=local ansible_python_interpreter=/usr/bin/python3
+ 
+term(mn):-
+
+ansible-playbook -i inventory.ini ec2.yaml 
+//now check your instance in AWS ec2
+
+ 
+
