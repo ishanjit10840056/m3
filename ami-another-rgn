@@ -1,0 +1,51 @@
+First create a ec2 instance
+install httpd -> start and enable
+move to ->
+cd /var/www/html
+
+cat > index.html
+move to ip:80
+
+------------------------------
+
+go to the instance hosted (shut-down and then do) - if no instance already create one and stop it
+
+select the instance
+
+click on actions
+
+image and templates
+
+create a image
+
+go to create image
+
+Keep the reboot instance to unticked
+
+delete on termination - untick
+
+then click on create AMI
+
+Now go to AMI and you will see your AMI created
+
+--------------------------------------------------
+
+Go to images - AMIs
+
+select the AMI
+
+Click on actions -> copy AMI
+
+Choose new destination region ex. Ohio
+
+click on copy AMI
+
+and switch to Ohio region from the main menu drop down
+
+Check the AMI image -> and check on status until it becomes available
+
+Select the image and launch an ec2 using template
+
+the link from root@ to ec2-user@
+
+it would be live on ohio publicip:80
