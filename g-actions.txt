@@ -41,3 +41,18 @@ AWS_SECRET_ACCESS_KEY
 
 simple workflow
 configure
+
+go to actions in GitHub
+set up a workflow yourself
+paste the content from this file -
+https://github.com/sanjayguruji/s3-bucket-repo/blob/main/.github/workflows/main.yml
+
+also change the last line to your bucker name
+
+commit changes
+
+then you will see a green tick
+
+Now go to s3 bucket and you will see the files,
+go to index.html copy the object url 
+paste it in browser and you will see the website
