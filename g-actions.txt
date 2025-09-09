@@ -1,24 +1,43 @@
-create a s3
-enable acl
-enable static website
-index document - index.html
-in bucket policy paste the link
+
+
+Go to aws -> s3
+create a bucket
+ACL enabled
+Untick -> Block all public access
+Open the bucket
+Properties 
+Static website hosting
+Edit
+Enable
+Index document -> index.html
+
+then go to permissions
+then go to bucket policy
+edit
+and copy the bucket policy from the below link and paste it & change the bucket name
+https://medium.com/@bryant.logan1/ci-cd-workflow-using-github-actions-for-aws-s3-6e15bae5b2d0
 
 then create a s3 user
 give him amazons3fullaccess
 
-in secret and variables
-actions
 
 create a GitHub repo
 create a index.html file in it
+
+go to settings of repo
+in secret and variables
+actions
 now create actions secret
 aws_bucket_name
 in secret give the bucket name
 save
 now create another action secret
+AWS_ACCESS_KEY_ID
 and give the IAM access key
 and in another secret give the password
+AWS_SECRET_ACCESS_KEY
+
+
 
 simple workflow
 configure
