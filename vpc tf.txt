@@ -220,3 +220,34 @@ resource "aws_iam_user_policy_attachment" "ec2_access" {
   policy_arn = aws_iam_policy.ec2_read_only.arn
 }
 
+
+=======================================================================
+
+install terraform
+https://developer.hashicorp.com/terraform/install
+
+aws configure
+
+then create a vpc.tf file 
+copy the content from vpc.txt
+
+
+Two instance will be created
+One public one private server
+connect the public server to the instance
+then copy the content of key.pem file from 
+you local machine to the public machine
+and create a vim key.pem and paste the content
+of key inside it
+
+then copy the connect link of private machine
+paste it inside the public machine
+and then the private machine will be connected
+through the public machine
+then ping google
+and internet will be accessible
+--------------------------------------------
+vim tf.pem
+    5  ssh root@10.0.1.92
+    6  chmod 400 tf.pem
+    7  ssh -i "tf.pem" ec2-user@10.0.1.92
